@@ -12,9 +12,12 @@ function Write-ColorOutput {
 # 清理输入中的不可见字符（控制字符、转义序列等）
 function Clean-Input {
     param([string]$Input)
-    # 移除所有控制字符 (ASCII 0-31, 127) 和 ANSI 转义序列
-    $cleaned = $Input -replace '\x1b\[[0-9;]*[a-zA-Z]', ''  # ANSI 转义序列
-    $cleaned = $cleaned -replace '[\x00-\x1f\x7f]', ''       # 控制字符
+    # 移除 Bracketed Paste Mode 序列 (^[[200~ 和 ^[[201~)
+    $cleaned = $Input -replace '\x1b\[\d*~', ''
+    # 移除所有 ANSI 转义序列 (如方向键 ^[[A, ^[[B, ^[[C, ^[[D)
+    $cleaned = $cleaned -replace '\x1b\[[0-9;]*[a-zA-Z]', ''
+    # 移除所有控制字符 (ASCII 0-31, 127)
+    $cleaned = $cleaned -replace '[\x00-\x1f\x7f]', ''
     return $cleaned.Trim()
 }
 

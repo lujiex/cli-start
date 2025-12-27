@@ -15,7 +15,8 @@ NC='\033[0m' # No Color
 
 # 清理输入中的不可见字符（控制字符、转义序列等）
 clean_input() {
-    echo "$1" | sed 's/\x1b\[[0-9;]*[a-zA-Z]//g' | tr -d '\000-\037\177' | xargs
+    # 移除 Bracketed Paste Mode 序列、ANSI 转义序列和控制字符
+    echo "$1" | sed 's/\x1b\[[0-9;]*[a-zA-Z~]//g' | tr -d '\000-\037\177' | xargs
 }
 
 echo -e "${BLUE}"
