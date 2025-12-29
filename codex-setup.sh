@@ -39,6 +39,11 @@ read -r BASE_URL_INPUT < /dev/tty
 BASE_URL=$(clean_input "$BASE_URL_INPUT")
 if [ -z "$BASE_URL" ]; then
     BASE_URL="https://api.openai.com/v1"
+else
+    # 如果 URL 不以 /v1 结尾，自动补充
+    if [[ ! "$BASE_URL" =~ /v1$ ]]; then
+        BASE_URL="${BASE_URL%/}/v1"
+    fi
 fi
 echo -e "${BLUE}使用 Base URL: $BASE_URL${NC}"
 
@@ -73,7 +78,7 @@ mkdir -p "$CONFIG_DIR"
 CONFIG_FILE="$CONFIG_DIR/config.toml"
 cat > "$CONFIG_FILE" << EOF
 model_provider = "custom"
-model = "gpt-4o"
+model = "gpt-5.2-codex"
 model_reasoning_effort = "high"
 network_access = "enabled"
 disable_response_storage = true

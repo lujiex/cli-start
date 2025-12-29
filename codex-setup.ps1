@@ -41,6 +41,11 @@ Write-ColorOutput "请输入 API Base URL (直接回车使用默认值 https://a
 $BaseUrl = Clean-Input (Read-Host)
 if ([string]::IsNullOrWhiteSpace($BaseUrl)) {
     $BaseUrl = "https://api.openai.com/v1"
+} else {
+    # 如果 URL 不以 /v1 结尾，自动补充
+    if (-not $BaseUrl.EndsWith("/v1")) {
+        $BaseUrl = $BaseUrl.TrimEnd('/') + "/v1"
+    }
 }
 Write-ColorOutput "使用 Base URL: $BaseUrl" "Cyan"
 
@@ -74,7 +79,7 @@ if (-not (Test-Path $ConfigDir)) {
 $ConfigFile = "$ConfigDir\config.toml"
 $ConfigContent = @"
 model_provider = "custom"
-model = "gpt-4o"
+model = "gpt-5.2-codex"
 model_reasoning_effort = "high"
 network_access = "enabled"
 disable_response_storage = true
