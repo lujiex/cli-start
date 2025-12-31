@@ -161,6 +161,60 @@ if (-not $claudeInstalled) {
     }
 }
 
+# ==================== 环境变量配置 ====================
+Write-Host ""
+Write-ColorOutput "════════════════════════════════════════════════════════════" "Cyan"
+Write-ColorOutput "                    环境变量配置                            " "Cyan"
+Write-ColorOutput "════════════════════════════════════════════════════════════" "Cyan"
+Write-Host ""
+
+$EnvVarName = "CLAUDE_CONFIG_DIR"
+$EnvVarValue = "$env:USERPROFILE\.claude"
+
+# 检查环境变量是否已存在
+$existingValue = [System.Environment]::GetEnvironmentVariable($EnvVarName, [System.EnvironmentVariableTarget]::User)
+
+if (-not [string]::IsNullOrWhiteSpace($existingValue)) {
+    Write-ColorOutput "✓ 环境变量 $EnvVarName 已存在，跳过配置" "Green"
+    Write-Host "  当前值: " -NoNewline
+    Write-ColorOutput $existingValue "Cyan"
+} else {
+    Write-ColorOutput "[提示] Claude Code 需要 $EnvVarName 环境变量才能读取配置文件" "Yellow"
+    Write-ColorOutput "是否添加用户环境变量？[Y/n]:" "Green"
+    $addEnv = Clean-Input (Read-Host)
+    if ($addEnv -ne "n" -and $addEnv -ne "N") {
+        try {
+            [System.Environment]::SetEnvironmentVariable($EnvVarName, $EnvVarValue, [System.EnvironmentVariableTarget]::User)
+            Write-ColorOutput "✓ 环境变量已添加到 Windows 用户环境变量" "Green"
+            Write-Host "  变量名: " -NoNewline
+            Write-ColorOutput $EnvVarName "Cyan"
+            Write-Host "  变量值: " -NoNewline
+            Write-ColorOutput $EnvVarValue "Cyan"
+            Write-ColorOutput "[重要] 请重新打开终端或命令提示符使环境变量生效" "Yellow"
+            # 同时设置当前 session 的环境变量
+            $env:CLAUDE_CONFIG_DIR = $EnvVarValue
+        } catch {
+            Write-ColorOutput "✗ 环境变量设置失败: $_" "Red"
+            Write-ColorOutput "您可以手动添加环境变量：" "Yellow"
+            Write-Host "  1. 打开 系统属性 -> 高级 -> 环境变量"
+            Write-Host "  2. 在用户变量中新建："
+            Write-Host "     变量名: " -NoNewline
+            Write-ColorOutput $EnvVarName "Cyan"
+            Write-Host "     变量值: " -NoNewline
+            Write-ColorOutput $EnvVarValue "Cyan"
+        }
+    } else {
+        Write-ColorOutput "[跳过] 未添加环境变量，Claude Code 可能无法读取配置文件" "Yellow"
+        Write-ColorOutput "您可以手动添加环境变量：" "Yellow"
+        Write-Host "  1. 打开 系统属性 -> 高级 -> 环境变量"
+        Write-Host "  2. 在用户变量中新建："
+        Write-Host "     变量名: " -NoNewline
+        Write-ColorOutput $EnvVarName "Cyan"
+        Write-Host "     变量值: " -NoNewline
+        Write-ColorOutput "%USERPROFILE%\.claude" "Cyan"
+    }
+}
+
 Write-Host ""
 Write-ColorOutput "╔════════════════════════════════════════════════════════════╗" "Green"
 Write-ColorOutput "║                    全部配置完成！                          ║" "Green"

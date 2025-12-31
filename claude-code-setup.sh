@@ -152,6 +152,76 @@ else
     fi
 fi
 
+# ==================== 环境变量配置 ====================
+echo ""
+echo -e "${CYAN}════════════════════════════════════════════════════════════${NC}"
+echo -e "${CYAN}                    环境变量配置                            ${NC}"
+echo -e "${CYAN}════════════════════════════════════════════════════════════${NC}"
+echo ""
+
+ENV_VAR_NAME="CLAUDE_CONFIG_DIR"
+ENV_VAR_VALUE="$HOME/.claude"
+
+# 检测当前 shell 配置文件
+detect_shell_rc() {
+    if [ -n "$ZSH_VERSION" ] || [ "$SHELL" = "/bin/zsh" ] || [ "$SHELL" = "/usr/bin/zsh" ]; then
+        echo "$HOME/.zshrc"
+    elif [ -n "$BASH_VERSION" ] || [ "$SHELL" = "/bin/bash" ] || [ "$SHELL" = "/usr/bin/bash" ]; then
+        # 优先使用 .bashrc，如果不存在则使用 .bash_profile
+        if [ -f "$HOME/.bashrc" ]; then
+            echo "$HOME/.bashrc"
+        else
+            echo "$HOME/.bash_profile"
+        fi
+    else
+        # 默认使用 .profile
+        echo "$HOME/.profile"
+    fi
+}
+
+SHELL_RC=$(detect_shell_rc)
+
+# 检查环境变量是否已存在
+check_env_exists() {
+    # 检查当前环境
+    if [ -n "${!ENV_VAR_NAME}" ]; then
+        return 0
+    fi
+    # 检查 shell 配置文件中是否已有该变量
+    if [ -f "$SHELL_RC" ] && grep -q "export $ENV_VAR_NAME=" "$SHELL_RC" 2>/dev/null; then
+        return 0
+    fi
+    return 1
+}
+
+if check_env_exists; then
+    echo -e "${GREEN}✓ 环境变量 $ENV_VAR_NAME 已存在，跳过配置${NC}"
+    if [ -n "${!ENV_VAR_NAME}" ]; then
+        echo -e "  当前值: ${BLUE}${!ENV_VAR_NAME}${NC}"
+    fi
+else
+    echo -e "${YELLOW}[提示] Claude Code 需要 $ENV_VAR_NAME 环境变量才能读取配置文件${NC}"
+    echo -e "${GREEN}是否添加环境变量到 $SHELL_RC？[Y/n]:${NC}"
+    read -r ADD_ENV_INPUT < /dev/tty
+    ADD_ENV=$(clean_input "$ADD_ENV_INPUT")
+    if [ "$ADD_ENV" != "n" ] && [ "$ADD_ENV" != "N" ]; then
+        # 添加环境变量到 shell 配置文件
+        echo "" >> "$SHELL_RC"
+        echo "# Claude Code 配置目录" >> "$SHELL_RC"
+        echo "export $ENV_VAR_NAME=\"$ENV_VAR_VALUE\"" >> "$SHELL_RC"
+        echo -e "${GREEN}✓ 环境变量已添加到 $SHELL_RC${NC}"
+        echo -e "${YELLOW}[重要] 请运行以下命令使环境变量生效，或重新打开终端：${NC}"
+        echo -e "  ${BLUE}source $SHELL_RC${NC}"
+
+        # 同时设置当前 session 的环境变量
+        export "$ENV_VAR_NAME"="$ENV_VAR_VALUE"
+    else
+        echo -e "${YELLOW}[跳过] 未添加环境变量，Claude Code 可能无法读取配置文件${NC}"
+        echo -e "${YELLOW}您可以手动添加以下内容到您的 shell 配置文件：${NC}"
+        echo -e "  ${BLUE}export $ENV_VAR_NAME=\"$ENV_VAR_VALUE\"${NC}"
+    fi
+fi
+
 echo ""
 echo -e "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${GREEN}║                    全部配置完成！                          ║${NC}"
