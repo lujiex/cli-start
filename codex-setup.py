@@ -76,10 +76,42 @@ def clean_input(text: str) -> str:
     return text.strip()
 
 
+def get_tty_input(prompt: str) -> str:
+    """
+    从终端获取用户输入，支持 curl | python3 方式运行。
+    当 stdin 被管道占用时，直接从 /dev/tty (Unix) 或 CON (Windows) 读取。
+    """
+    # 先打印提示信息到 stdout
+    print(prompt, end='', flush=True)
+
+    # 检查 stdin 是否是终端
+    if sys.stdin.isatty():
+        # 正常情况，stdin 是终端
+        try:
+            return sys.stdin.readline().rstrip('\n\r')
+        except EOFError:
+            return ''
+
+    # stdin 被管道占用，需要从终端设备读取
+    tty_path = None
+    if sys.platform == 'win32':
+        tty_path = 'CON'
+    else:
+        tty_path = '/dev/tty'
+
+    try:
+        with open(tty_path, 'r') as tty:
+            return tty.readline().rstrip('\n\r')
+    except (OSError, IOError) as e:
+        print(f"\n{colors.RED}[错误] 无法从终端读取输入: {e}{colors.NC}", file=sys.stderr)
+        print(f"{colors.YELLOW}提示: 请直接运行脚本而非通过管道{colors.NC}", file=sys.stderr)
+        sys.exit(1)
+
+
 def get_input(prompt: str) -> str:
     """获取用户输入并清理"""
     try:
-        return clean_input(input(prompt))
+        return clean_input(get_tty_input(prompt))
     except EOFError:
         return ''
 
